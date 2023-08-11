@@ -37,8 +37,8 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>) {
                         SpriteBundle {
                             texture: assets.load("tiles_middle.png"),
                             transform: Transform::from_xyz(
-                                (x as f32 - LEVEL_SIZE_X / 2.) * TILE_SIZE, 
-                                (y as f32 - LEVEL_SIZE_Y / 2.) * TILE_SIZE, 
+                                (x as f32) * TILE_SIZE, 
+                                (y as f32) * TILE_SIZE, 
                                 0.0
                             ),
                             ..Default::default()
@@ -83,7 +83,11 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
 fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2dBundle {
-            transform: Transform::from_xyz(0., 0., 1000.),
+            transform: Transform::from_xyz(
+                LEVEL_SIZE_X / 2. * TILE_SIZE,
+                LEVEL_SIZE_Y / 2. * TILE_SIZE,
+                1000.
+            ),
             ..Default::default()
         },
     ));

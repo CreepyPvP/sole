@@ -3,6 +3,11 @@ use std::string;
 use bevy::{prelude::{App, Commands, AssetServer, Res, Transform, Component, Camera2dBundle}, sprite::{SpriteBundle, Sprite}, DefaultPlugins};
 use serde::Deserialize;
 
+
+const TILE_SIZE: f32 = 32.0;
+const LEVEL_SIZE_X: f32 = 16.0;
+const LEVEL_SIZE_Y: f32 = 16.0;
+
 #[derive(Deserialize)]
 struct LayerInstance {
     __cHei: i32,
@@ -31,7 +36,11 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>) {
                     commands.spawn(
                         SpriteBundle {
                             texture: assets.load("tiles_middle.png"),
-                            transform: Transform::from_xyz((x as f32) * 32.0, (y as f32) * 32.0, 0.0),
+                            transform: Transform::from_xyz(
+                                (x as f32 - LEVEL_SIZE_X / 2.) * TILE_SIZE, 
+                                (y as f32 - LEVEL_SIZE_Y / 2.) * TILE_SIZE, 
+                                0.0
+                            ),
                             ..Default::default()
                         }
                     );

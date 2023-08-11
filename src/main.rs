@@ -1,6 +1,6 @@
 use std::string;
 
-use bevy::{prelude::{App, Commands, AssetServer, Res, Transform}, sprite::{SpriteBundle, Sprite}};
+use bevy::{prelude::{App, Commands, AssetServer, Res, Transform, Component}, sprite::{SpriteBundle, Sprite}};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -17,7 +17,7 @@ struct Level {
 }
 
 fn render_map(mut commands: Commands, assets: Res<AssetServer>) {
-    let level_raw = include_str!("../level.json");
+    let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
 
     for layer in level.layerInstances {
@@ -42,8 +42,38 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>) {
 
 }
 
+#[derive(Component)]
+struct Position {
+    x: f32,
+    y: f32,
+}
+
+#[derive(Component)]
+struct Velocity {
+    x: f32,
+    y: f32,
+}
+
+fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.spawn((
+        SpriteBundle {
+            texture: assets.load("player"),
+            ..Default::default()
+        },
+        Position {
+            x: 0.0,
+            y: 0.0
+        },
+        Velocity {
+            x: 0.0,
+            y: 0.0
+        },
+    ));
+}
+
 fn main() {
     App::new()
         .add_startup_system(render_map)
+        .add_startup_system(setup_player)
         .run();
 }

@@ -1,6 +1,6 @@
 use std::string;
 
-use bevy::{prelude::{App, Commands, AssetServer, Res, Transform, Component}, sprite::{SpriteBundle, Sprite}};
+use bevy::{prelude::{App, Commands, AssetServer, Res, Transform, Component, Camera2dBundle}, sprite::{SpriteBundle, Sprite}, DefaultPlugins};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -30,8 +30,8 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>) {
                     }
                     commands.spawn(
                         SpriteBundle {
-                            texture: assets.load("wall.png"),
-                            transform: Transform::from_xyz((x as f32) * 100.0, (y as f32) * 100.0, 0.0),
+                            texture: assets.load("tiles_middle.png"),
+                            transform: Transform::from_xyz((x as f32) * 32.0, (y as f32) * 32.0, 0.0),
                             ..Default::default()
                         }
                     );
@@ -55,25 +55,36 @@ struct Velocity {
 }
 
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
+    // commands.spawn((
+    //     SpriteBundle {
+    //         texture: assets.load("player"),
+    //         ..Default::default()
+    //     },
+    //     Position {
+    //         x: 0.0,
+    //         y: 0.0
+    //     },
+    //     Velocity {
+    //         x: 0.0,
+    //         y: 0.0
+    //     },
+    // ));
+}
+
+fn setup_camera(mut commands: Commands) {
     commands.spawn((
-        SpriteBundle {
-            texture: assets.load("player"),
+        Camera2dBundle {
+            transform: Transform::from_xyz(0., 0., 1000.),
             ..Default::default()
-        },
-        Position {
-            x: 0.0,
-            y: 0.0
-        },
-        Velocity {
-            x: 0.0,
-            y: 0.0
         },
     ));
 }
 
 fn main() {
     App::new()
+        .add_plugins(DefaultPlugins)
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
+        .add_startup_system(setup_camera)
         .run();
 }

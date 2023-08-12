@@ -48,12 +48,16 @@ struct Level {
     layerInstances: Vec<LayerInstance>,
 }
 
-fn render_map(
-    mut commands: Commands,
-    assets: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<LightRayMaterial>>,
-) {
+#[derive(Component)]
+struct AnimationIndex {
+    first: usize,
+    last: usize,
+}
+
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+
+fn render_map(mut commands: Commands, assets: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut texture_atlases: ResMut<Assets<TextureAtlas>>) {
     let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
 
@@ -94,22 +98,42 @@ fn render_map(
                                 }
                             }
 
+                            let index = AnimationIndex { first: 0, last: 4 };
+                            let texture_atlas = TextureAtlas::from_grid(assets.load("lightray.png"), Vec2::new(32.0, 32.0), 5, 1, None, None);
                             commands.spawn((
-                                SpriteBundle {
-                                    texture: assets.load("tiles_middle.png"),
+                                SpriteSheetBundle {
+                                    texture_atlas: texture_atlases.add(texture_atlas),
                                     transform: Transform::from_xyz(100., 100., 200.),
+                                    sprite: TextureAtlasSprite::new(index.first),
                                     ..Default::default()
                                 },
-                                materials.add(LightRayMaterial {
-                                    color: Color::rgb(255., 100., 0.),
-                                }),
+                                index,
+                                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                             ));
+                            // commands.spawn(SpriteBundle {
+                            //     texture: assets.load("lightray.png"),
+                            //     transform: Transform::from_xyz(100., 100., 200.),
+                            //     ..Default::default()
+                            // });
                         }
                         _ => (),
                     }
                 }
             }
             _ => (),
+        }
+    }
+}
+
+fn update_animations(time: Res<Time>, mut query: Query<(&AnimationIndex, &mut AnimationTimer, &mut TextureAtlasSprite)>) {
+    for (index, mut timer, mut sprite) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            sprite.index = if sprite.index == index.last {
+                index.first
+            } else {
+                sprite.index + 1
+            }
         }
     }
 }
@@ -140,40 +164,12 @@ fn setup_camera(mut commands: Commands) {
     },));
 }
 
-#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
-#[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e0"]
-pub struct LightRayMaterial {
-    #[uniform(0)]
-    color: Color,
-}
-
-impl Material for LightRayMaterial {
-    fn fragment_shader() -> ShaderRef {
-        "shaders/lightray.frag".into()
-    }
-
-    fn vertex_shader() -> ShaderRef {
-        "shaders/lightray.vert".into()
-    }
-
-    fn specialize(
-        _pipeline: &MaterialPipeline<Self>,
-        descriptor: &mut RenderPipelineDescriptor,
-        _layout: &MeshVertexBufferLayout,
-        _key: MaterialPipelineKey<Self>,
-    ) -> Result<(), SpecializedMeshPipelineError> {
-        descriptor.vertex.entry_point = "main".into();
-        descriptor.fragment.as_mut().unwrap().entry_point = "main".into();
-        Ok(())
-    }
-}
-
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugin(MaterialPlugin::<LightRayMaterial>::default())
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
+        .add_system(update_animations)
         .run();
 }

@@ -72,6 +72,69 @@
 						{ "__identifier": "color", "__type": "Color", "__value": "#ECA201", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [15507969] }] },
 						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
 					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [1,2],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "4b4299e0-1460-11ee-967f-c78013e3d141",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [16,32],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 14, "cy": 2 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["14,2"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
+						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [3,14],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "564115b0-1460-11ee-967f-1d9c586d4a61",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [48,224],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 3, "cy": 1 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["3,1"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
+						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [12,1],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "5f4a9f50-1460-11ee-967f-f1d8603fb95a",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [192,16],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 12, "cy": 14 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["12,14"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
+						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+					]
 				}
 			]
 		},

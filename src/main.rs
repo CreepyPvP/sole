@@ -11,7 +11,7 @@ use bevy::{
             SpecializedMeshPipelineError,
         },
     },
-    sprite::{MaterialMesh2dBundle, Sprite, SpriteBundle},
+    sprite::{MaterialMesh2dBundle, Sprite, SpriteBundle, Anchor},
     DefaultPlugins,
 };
 use serde::Deserialize;
@@ -19,6 +19,7 @@ use serde::Deserialize;
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
+const PLAYER_SPEED: f32 = 3.;
 
 #[derive(Deserialize)]
 struct LayerInstance {
@@ -92,7 +93,7 @@ fn render_map(
         // assets.load("lightray.png"),
         assets.load("photon_ray_6spd_greyscale.png"),
         Vec2::new(32.0, 32.0),
-        5,
+        6,
         1,
         None,
         None,
@@ -169,6 +170,7 @@ fn render_map(
                                 rot += 3.14 / 2.;
                             }
 
+                            let prio = game_state.ray_count;
                             commands.spawn(Ray {
                                 src_x,
                                 src_y,
@@ -176,7 +178,7 @@ fn render_map(
                                 dest_y,
                                 horizontal,
                                 reversed,
-                                prio: game_state.ray_count,
+                                prio
                             });
 
                             game_state.ray_count += 1;
@@ -186,10 +188,10 @@ fn render_map(
                                     let mut transform = Transform::from_xyz(
                                         x as f32 * TILE_SIZE,
                                         -y as f32 * TILE_SIZE,
-                                        50.,
+                                        99. - prio as f32,
                                     );
                                     transform.rotate_z(rot);
-                                    let index = AnimationIndex { first: 0, last: 4 };
+                                    let index = AnimationIndex { first: 0, last: 5 };
                                     commands.spawn((
                                         SpriteSheetBundle {
                                             texture_atlas: light_ray_texture_handle.clone(),
@@ -240,6 +242,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
         SpriteBundle {
             texture: assets.load("asymmetric_spaceship_64.png"),
             sprite: Sprite {
+                anchor: Anchor::Center,
                 ..Default::default()
             },
             transform: Transform::from_xyz(0., -100., 100.)
@@ -247,8 +250,8 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
             ..Default::default()
         },
         Player {
-            x: 1.5,
-            y: -2.5
+            x:  12.,
+            y:  10.
         },
     ));
 }
@@ -265,18 +268,40 @@ fn setup_camera(mut commands: Commands) {
 }
 
 fn move_player(time: Res<Time>, mut q_player: Query<(&mut Player, &mut Transform)>, q_ray: Query<&Ray>) {
-    for (player, mut transform) in &mut q_player {
+    for (mut player, mut transform) in &mut q_player {
+        let mut heighest_prio = 999999;
+        let mut x_diff = 0.;
+        let mut y_diff = 0.;
+
         for ray in &q_ray {
-            if player.x > (ray.src_x as f32)
-                && player.x < (ray.dest_x as f32 + 1.)
-                && player.y < (ray.dest_y as f32)
-                && player.y > (ray.dest_y as f32 - 1.)
+            if player.x >= (ray.src_x as f32)
+                && player.x <= (ray.dest_x as f32)
+                && player.y <= (ray.dest_y as f32)
+                && player.y >= (ray.dest_y as f32)
             {
-                println!("collision");
+                if ray.prio > heighest_prio {
+                    continue;
+                }
+                heighest_prio = ray.prio;
+                if ray.horizontal {
+                    if ray.reversed {
+                        x_diff = PLAYER_SPEED;
+                    } else {
+                        x_diff = -PLAYER_SPEED;
+                    }
+                } else {
+                    if ray.reversed {
+                        y_diff = -PLAYER_SPEED;
+                    } else {
+                        y_diff = PLAYER_SPEED;
+                    }
+                }
             }
         }
 
-        transform.translation = Vec3::new(player.x * TILE_SIZE, player.y * TILE_SIZE, 100.);
+        player.x += time.delta().as_secs_f32() * x_diff;
+        player.y += time.delta().as_secs_f32() * y_diff;
+        transform.translation = Vec3::new(player.x * TILE_SIZE, -player.y * TILE_SIZE, 100.);
     }
 }
 

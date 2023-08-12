@@ -24,6 +24,13 @@ const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
 const PLAYER_SPEED: f32 = 3.;
 
+const RAY_COLORS: [Color; 4] = [
+    Color::rgb(255. / 255., 206. / 255., 92. / 255.),
+    Color::rgb(235. / 255., 171. / 255., 52. / 255.),
+    Color::rgb(165. / 255., 224. / 255., 47. / 255.),
+    Color::rgb(69. / 255., 97. / 255., 237. / 255.),
+];
+
 #[derive(Deserialize)]
 struct LayerInstance {
     __cHei: i32,
@@ -230,7 +237,12 @@ fn render_map(
                                         SpriteSheetBundle {
                                             texture_atlas: light_ray_texture_handle.clone(),
                                             transform,
-                                            sprite: TextureAtlasSprite::new(index.first),
+                                            sprite: TextureAtlasSprite {
+                                                index: index.first,
+                                                // TODO: fix tint
+                                                color: RAY_COLORS[prio as usize % RAY_COLORS.len()],
+                                                ..Default::default()
+                                            },
                                             ..Default::default()
                                         },
                                         index,

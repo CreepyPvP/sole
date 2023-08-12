@@ -57,9 +57,23 @@ struct AnimationIndex {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-fn render_map(mut commands: Commands, assets: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut texture_atlases: ResMut<Assets<TextureAtlas>>) {
+fn render_map(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
     let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
+    let light_ray_texture_atlas = TextureAtlas::from_grid(
+        assets.load("lightray.png"),
+        Vec2::new(32.0, 32.0),
+        5,
+        1,
+        None,
+        None,
+    );
+    let light_ray_texture_handle = texture_atlases.add(light_ray_texture_atlas);
 
     for layer in level.layerInstances {
         match layer.__type.as_str() {
@@ -87,9 +101,17 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>, mut meshes: ResM
                     match entity.__identifier.as_str() {
                         "Lightray" => {
                             let mut color: String = String::default();
+                            let mut dest_x: i32 = 0;
+                            let mut dest_y: i32 = 0;
+                            let src_x = entity.__grid[0];
+                            let src_y = entity.__grid[1];
                             for field in entity.fieldInstances {
                                 match field.__identifier.as_str() {
-                                    "direction" => {}
+                                    "destination" => {
+                                        let obj = field.__value.as_object().unwrap();
+                                        dest_x = obj.get("cx").unwrap().as_i64().unwrap() as i32;
+                                        dest_y = obj.get("cy").unwrap().as_i64().unwrap() as i32;
+                                    }
                                     "color" => {
                                         color = field.__value.to_string();
                                     }
@@ -98,23 +120,24 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>, mut meshes: ResM
                                 }
                             }
 
-                            let index = AnimationIndex { first: 0, last: 4 };
-                            let texture_atlas = TextureAtlas::from_grid(assets.load("lightray.png"), Vec2::new(32.0, 32.0), 5, 1, None, None);
-                            commands.spawn((
-                                SpriteSheetBundle {
-                                    texture_atlas: texture_atlases.add(texture_atlas),
-                                    transform: Transform::from_xyz(100., 100., 200.),
-                                    sprite: TextureAtlasSprite::new(index.first),
-                                    ..Default::default()
-                                },
-                                index,
-                                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-                            ));
-                            // commands.spawn(SpriteBundle {
-                            //     texture: assets.load("lightray.png"),
-                            //     transform: Transform::from_xyz(100., 100., 200.),
-                            //     ..Default::default()
-                            // });
+                            for x in dest_x..=src_x {
+                                for y in dest_y..=src_y {
+                                    let index = AnimationIndex { first: 0, last: 4 };
+                                    commands.spawn((
+                                        SpriteSheetBundle {
+                                            texture_atlas: light_ray_texture_handle.clone(),
+                                            transform: Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 50.),
+                                            sprite: TextureAtlasSprite::new(index.first),
+                                            ..Default::default()
+                                        },
+                                        index,
+                                        AnimationTimer(Timer::from_seconds(
+                                            0.1,
+                                            TimerMode::Repeating,
+                                        )),
+                                    ));
+                                }
+                            }
                         }
                         _ => (),
                     }
@@ -125,7 +148,14 @@ fn render_map(mut commands: Commands, assets: Res<AssetServer>, mut meshes: ResM
     }
 }
 
-fn update_animations(time: Res<Time>, mut query: Query<(&AnimationIndex, &mut AnimationTimer, &mut TextureAtlasSprite)>) {
+fn update_animations(
+    time: Res<Time>,
+    mut query: Query<(
+        &AnimationIndex,
+        &mut AnimationTimer,
+        &mut TextureAtlasSprite,
+    )>,
+) {
     for (index, mut timer, mut sprite) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {

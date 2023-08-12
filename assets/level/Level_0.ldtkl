@@ -54,7 +54,7 @@
 			"entityInstances": [
 				{
 					"__identifier": "Lightray",
-					"__grid": [15,12],
+					"__grid": [14,12],
 					"__pivot": [0,0],
 					"__tags": [],
 					"__tile": null,
@@ -63,11 +63,11 @@
 					"width": 16,
 					"height": 16,
 					"defUid": 2,
-					"px": [240,192],
+					"px": [224,192],
 					"fieldInstances": [
-						{ "__identifier": "direction", "__type": "Point", "__value": { "cx": 0, "cy": 9 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 1, "cy": 12 }, "__tile": null, "defUid": 3, "realEditorValues": [{
 							"id": "V_String",
-							"params": ["0,9"]
+							"params": ["1,12"]
 						}] },
 						{ "__identifier": "color", "__type": "Color", "__value": "#ECA201", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [15507969] }] },
 						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }

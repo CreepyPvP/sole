@@ -11,10 +11,13 @@ use bevy::{
             SpecializedMeshPipelineError,
         },
     },
-    sprite::{MaterialMesh2dBundle, Sprite, SpriteBundle, Anchor},
+    sprite::{Anchor, MaterialMesh2dBundle, Sprite, SpriteBundle},
     DefaultPlugins,
 };
+use picking::{PickCamera, Pickable, PickingPlugin, Triangle, PickState};
 use serde::Deserialize;
+
+mod picking;
 
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
@@ -103,21 +106,52 @@ fn render_map(
     for layer in level.layerInstances {
         match layer.__type.as_str() {
             "IntGrid" => {
+                let pickable = Pickable { 
+                    triangles: vec![
+                        Triangle::new(
+                            Vec2::new(-16., 16.),
+                            Vec2::new(16., 16.),
+                            Vec2::new(-16., -16.)
+                            ),
+                            Triangle::new(
+                                Vec2::new(16., 16.),
+                                Vec2::new(-16., -16.),
+                                Vec2::new(16., -16.)
+                                )
+                    ] 
+                };
                 for x in 0..layer.__cWid {
                     for y in 0..layer.__cHei {
                         let index: usize = (x + layer.__cWid * y) as usize;
-                        if layer.intGridCsv[index] == 0 {
-                            continue;
+                        match layer.intGridCsv[index] {
+                            1 => {
+                                commands.spawn(SpriteBundle {
+                                    texture: assets.load("tiles_middle.png"),
+                                    transform: Transform::from_xyz(
+                                        (x as f32) * TILE_SIZE,
+                                        -(y as f32) * TILE_SIZE,
+                                        0.0,
+                                    ),
+                                    ..Default::default()
+                                });
+                            }
+                            2..=5 => {
+                                // pickable tiles
+                                commands.spawn((
+                                    SpriteBundle {
+                                        texture: assets.load("tiles_middle.png"),
+                                        transform: Transform::from_xyz(
+                                            (x as f32) * TILE_SIZE,
+                                            -(y as f32) * TILE_SIZE,
+                                            0.0,
+                                        ),
+                                        ..Default::default()
+                                    },
+                                    pickable.clone(),
+                                ));
+                            }
+                            _ => (),
                         }
-                        commands.spawn(SpriteBundle {
-                            texture: assets.load("tiles_middle.png"),
-                            transform: Transform::from_xyz(
-                                (x as f32) * TILE_SIZE,
-                                -(y as f32) * TILE_SIZE,
-                                0.0,
-                            ),
-                            ..Default::default()
-                        });
                     }
                 }
             }
@@ -178,7 +212,7 @@ fn render_map(
                                 dest_y,
                                 horizontal,
                                 reversed,
-                                prio
+                                prio,
                             });
 
                             game_state.ray_count += 1;
@@ -249,25 +283,29 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
-        Player {
-            x:  12.,
-            y:  10.
-        },
+        Player { x: 12., y: 10. },
     ));
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Camera2dBundle {
-        transform: Transform::from_xyz(
-            LEVEL_SIZE_X / 2. * TILE_SIZE,
-            -LEVEL_SIZE_Y / 2. * TILE_SIZE,
-            1000.,
-        ),
-        ..Default::default()
-    },));
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(
+                LEVEL_SIZE_X / 2. * TILE_SIZE,
+                -LEVEL_SIZE_Y / 2. * TILE_SIZE,
+                1000.,
+            ),
+            ..Default::default()
+        },
+        PickCamera,
+    ));
 }
 
-fn move_player(time: Res<Time>, mut q_player: Query<(&mut Player, &mut Transform)>, q_ray: Query<&Ray>) {
+fn move_player(
+    time: Res<Time>,
+    mut q_player: Query<(&mut Player, &mut Transform)>,
+    q_ray: Query<&Ray>,
+) {
     for (mut player, mut transform) in &mut q_player {
         let mut heighest_prio = 999999;
         let mut x_diff = 0.;
@@ -305,14 +343,28 @@ fn move_player(time: Res<Time>, mut q_player: Query<(&mut Player, &mut Transform
     }
 }
 
+fn update_hover_tint(pick_state: Res<PickState>, mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>) {
+    for (mut sprite, entity, pickable) in &mut q_sprite {
+        if pick_state.selected.is_some() && pick_state.selected.unwrap() == entity {
+            sprite.color = Color::rgb(2., 2., 2.);
+        } else {
+            sprite.color = Color::rgb(1., 1., 1.);
+        }
+    }
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugin(PickingPlugin)
         .insert_resource(GameState::default())
+
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
+
         .add_system(update_animations)
         .add_system(move_player)
+        .add_system(update_hover_tint)
         .run();
 }

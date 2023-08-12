@@ -14,7 +14,7 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Sprite, SpriteBundle},
     DefaultPlugins,
 };
-use picking::{PickCamera, Pickable, PickingPlugin, Triangle, PickState};
+use picking::{PickCamera, PickState, Pickable, PickingPlugin, Triangle};
 use serde::Deserialize;
 
 mod picking;
@@ -85,10 +85,20 @@ struct GameState {
     ray_count: i32,
 }
 
+#[derive(Eq, PartialEq, Clone)]
+enum Dir {
+    Upwards,
+    Downwards,
+    Leftwards,
+    Rightwards,
+}
+
 #[derive(Component)]
 struct Player {
     x: f32,
     y: f32,
+    direction: Option<Dir>,
+    last_direction: Option<Dir>,
 }
 
 fn render_map(
@@ -101,7 +111,7 @@ fn render_map(
     let level: Level = serde_json::from_str(level_raw).unwrap();
     let light_ray_texture_atlas = TextureAtlas::from_grid(
         // assets.load("lightray.png"),
-        assets.load("photon_ray_6spd_greyscale.png"),
+        assets.load("photon_ray_6spd_white_40alpha.png"),
         Vec2::new(32.0, 32.0),
         6,
         1,
@@ -113,19 +123,19 @@ fn render_map(
     for layer in level.layerInstances {
         match layer.__type.as_str() {
             "IntGrid" => {
-                let pickable = Pickable { 
+                let pickable = Pickable {
                     triangles: vec![
                         Triangle::new(
                             Vec2::new(-16., 16.),
                             Vec2::new(16., 16.),
-                            Vec2::new(-16., -16.)
-                            ),
-                            Triangle::new(
-                                Vec2::new(16., 16.),
-                                Vec2::new(-16., -16.),
-                                Vec2::new(16., -16.)
-                                )
-                    ] 
+                            Vec2::new(-16., -16.),
+                        ),
+                        Triangle::new(
+                            Vec2::new(16., 16.),
+                            Vec2::new(-16., -16.),
+                            Vec2::new(16., -16.),
+                        ),
+                    ],
                 };
                 for x in 0..layer.__cWid {
                     for y in 0..layer.__cHei {
@@ -296,7 +306,12 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
-        Player { x: 13., y: 10. },
+        Player {
+            x: 3.,
+            y: 8.,
+            direction: None,
+            last_direction: None,
+        },
     ));
 }
 
@@ -326,18 +341,34 @@ fn move_player(
 
         let player_x = player.x as i32;
         let player_y = player.y as i32;
+        let mut new_direction: Option<Dir> = None;
         for ray in &q_ray {
-
             let mut y_offset = 0;
             let mut x_offset = 0;
 
-            if ray.reversed && ray.horizontal {
-                // y_offset = -1;
-            }
-            if !ray.reversed && ray.horizontal {
+            if (matches!(player.direction, Some(Dir::Upwards))
+                || (matches!(player.direction, Some(Dir::Rightwards))
+                    && matches!(player.last_direction, Some(Dir::Upwards))))
+                && ray.reversed && ray.horizontal
+            {
                 y_offset = -1;
             }
-            if !ray.reversed && !ray.horizontal {
+            if (matches!(player.direction, Some(Dir::Upwards))
+                || (matches!(player.direction, Some(Dir::Leftwards))
+                    && matches!(player.last_direction, Some(Dir::Upwards))))
+                && !ray.reversed && ray.horizontal {
+                y_offset = -1;
+            }
+            if (matches!(player.direction, Some(Dir::Leftwards))
+                || (matches!(player.direction, Some(Dir::Downwards))
+                    && matches!(player.last_direction, Some(Dir::Leftwards))))
+                && !ray.reversed && !ray.horizontal {
+                x_offset = -1;
+            }
+            if (matches!(player.direction, Some(Dir::Leftwards))
+                || (matches!(player.direction, Some(Dir::Upwards))
+                    && matches!(player.last_direction, Some(Dir::Leftwards))))
+                && ray.reversed && !ray.horizontal {
                 x_offset = -1;
             }
 
@@ -354,15 +385,19 @@ fn move_player(
                     y_diff = 0.;
                     if ray.reversed {
                         x_diff = PLAYER_SPEED;
+                        new_direction = Some(Dir::Rightwards);
                     } else {
                         x_diff = -PLAYER_SPEED;
+                        new_direction = Some(Dir::Leftwards);
                     }
                 } else {
                     x_diff = 0.;
                     if ray.reversed {
                         y_diff = -PLAYER_SPEED;
+                        new_direction = Some(Dir::Upwards);
                     } else {
                         y_diff = PLAYER_SPEED;
+                        new_direction = Some(Dir::Downwards);
                     }
                 }
             }
@@ -370,11 +405,20 @@ fn move_player(
 
         player.x += time.delta().as_secs_f32() * x_diff;
         player.y += time.delta().as_secs_f32() * y_diff;
+        // if (player.x as i32) != player_x || (player.y as i32) != player_y {
+        // }
+        if player.direction != new_direction {
+            player.last_direction = player.direction.clone();
+            player.direction = new_direction;
+        }
         transform.translation = Vec3::new(player.x * TILE_SIZE, -player.y * TILE_SIZE, 200.);
     }
 }
 
-fn update_hover_tint(pick_state: Res<PickState>, mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>) {
+fn update_hover_tint(
+    pick_state: Res<PickState>,
+    mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>,
+) {
     for (mut sprite, entity, _) in &mut q_sprite {
         if pick_state.selected.is_some() && pick_state.selected.unwrap() == entity {
             sprite.color = Color::rgb(1.2, 1.2, 1.2);
@@ -395,18 +439,13 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugin(PickingPlugin)
         .insert_resource(GameState::default())
-
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
-
         .configure_set(GameSystemSets::Input)
         .configure_set(GameSystemSets::Logic.after(GameSystemSets::Input))
-
-        .add_systems((
-            update_animations,
-            move_player,
-            update_hover_tint
-        ).in_set(GameSystemSets::Logic))
+        .add_systems(
+            (update_animations, move_player, update_hover_tint).in_set(GameSystemSets::Logic),
+        )
         .run();
 }

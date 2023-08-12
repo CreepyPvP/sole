@@ -103,8 +103,8 @@ fn render_map(
                             let mut color: String = String::default();
                             let mut dest_x: i32 = 0;
                             let mut dest_y: i32 = 0;
-                            let src_x = entity.__grid[0];
-                            let src_y = entity.__grid[1];
+                            let mut src_x = entity.__grid[0];
+                            let mut src_y = entity.__grid[1];
                             for field in entity.fieldInstances {
                                 match field.__identifier.as_str() {
                                     "destination" => {
@@ -115,18 +115,48 @@ fn render_map(
                                     "color" => {
                                         color = field.__value.to_string();
                                     }
-                                    "strength" => {}
                                     _ => (),
                                 }
                             }
 
-                            for x in dest_x..=src_x {
-                                for y in dest_y..=src_y {
+                            let horizontal = dest_y == src_y;
+                            let mut reversed = false;
+
+                            if src_x > dest_x {
+                                let tmp = src_x;
+                                src_x = dest_x;
+                                dest_x = tmp;
+                                reversed = true;
+                            }
+
+                            if src_y > dest_y {
+                                let tmp = src_y;
+                                src_y = dest_y;
+                                dest_y = tmp;
+                                reversed = true;
+                            }
+
+                            let mut rot = 0.;
+                            if reversed {
+                                rot += 3.14;
+                            }
+                            if !horizontal {
+                                rot += 3.14 / 2.;
+                            }
+
+                            for x in src_x..=dest_x {
+                                for y in src_y..=dest_y {
+                                    let mut transform = Transform::from_xyz(
+                                        x as f32 * TILE_SIZE,
+                                        y as f32 * TILE_SIZE,
+                                        50.,
+                                    );
+                                    transform.rotate_z(rot);
                                     let index = AnimationIndex { first: 0, last: 4 };
                                     commands.spawn((
                                         SpriteSheetBundle {
                                             texture_atlas: light_ray_texture_handle.clone(),
-                                            transform: Transform::from_xyz(x as f32 * TILE_SIZE, y as f32 * TILE_SIZE, 50.),
+                                            transform,
                                             sprite: TextureAtlasSprite::new(index.first),
                                             ..Default::default()
                                         },
@@ -176,7 +206,7 @@ struct Velocity {
 
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((SpriteBundle {
-        texture: assets.load("player_v1.png"),
+        texture: assets.load("asymmetric_spaceship_v1.png"),
         transform: Transform::from_xyz(0., 0., 100.)
             .with_scale(bevy::prelude::Vec3::new(0.125, 0.125, 1.)),
         ..Default::default()

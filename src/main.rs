@@ -80,7 +80,6 @@ struct Player {
     y: f32,
 }
 
-
 fn render_map(
     mut commands: Commands,
     assets: Res<AssetServer>,
@@ -90,7 +89,8 @@ fn render_map(
     let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
     let light_ray_texture_atlas = TextureAtlas::from_grid(
-        assets.load("lightray.png"),
+        // assets.load("lightray.png"),
+        assets.load("photon_ray_6spd_greyscale.png"),
         Vec2::new(32.0, 32.0),
         5,
         1,
@@ -158,7 +158,6 @@ fn render_map(
                                 src_y = dest_y;
                                 dest_y = tmp;
                             } else {
-
                                 reversed = true;
                             }
 
@@ -170,17 +169,15 @@ fn render_map(
                                 rot += 3.14 / 2.;
                             }
 
-                            commands.spawn(
-                                Ray {
-                                    src_x,
-                                    src_y,
-                                    dest_x,
-                                    dest_y,
-                                    horizontal,
-                                    reversed,
-                                    prio: game_state.ray_count
-                                }
-                            );
+                            commands.spawn(Ray {
+                                src_x,
+                                src_y,
+                                dest_x,
+                                dest_y,
+                                horizontal,
+                                reversed,
+                                prio: game_state.ray_count,
+                            });
 
                             game_state.ray_count += 1;
 
@@ -238,19 +235,22 @@ fn update_animations(
     }
 }
 
-#[derive(Component)]
-struct Velocity {
-    x: f32,
-    y: f32,
-}
-
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn((SpriteBundle {
-        texture: assets.load("asymmetric_spaceship_64.png"),
-        transform: Transform::from_xyz(0., 0., 100.)
-            .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
-        ..Default::default()
-    },));
+    commands.spawn((
+        SpriteBundle {
+            texture: assets.load("asymmetric_spaceship_64.png"),
+            sprite: Sprite {
+                ..Default::default()
+            },
+            transform: Transform::from_xyz(0., -100., 100.)
+                .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
+            ..Default::default()
+        },
+        Player {
+            x: 1.5,
+            y: -2.5
+        },
+    ));
 }
 
 fn setup_camera(mut commands: Commands) {
@@ -264,11 +264,19 @@ fn setup_camera(mut commands: Commands) {
     },));
 }
 
-fn move_player(time: Res<Time>, q_player: Query<&Player>, q_ray: Query<&Ray>) {
-    for player in &q_player {
+fn move_player(time: Res<Time>, mut q_player: Query<(&mut Player, &mut Transform)>, q_ray: Query<&Ray>) {
+    for (player, mut transform) in &mut q_player {
         for ray in &q_ray {
-            
+            if player.x > (ray.src_x as f32)
+                && player.x < (ray.dest_x as f32 + 1.)
+                && player.y < (ray.dest_y as f32)
+                && player.y > (ray.dest_y as f32 - 1.)
+            {
+                println!("collision");
+            }
         }
+
+        transform.translation = Vec3::new(player.x * TILE_SIZE, player.y * TILE_SIZE, 100.);
     }
 }
 
@@ -280,5 +288,6 @@ fn main() {
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
         .add_system(update_animations)
+        .add_system(move_player)
         .run();
 }

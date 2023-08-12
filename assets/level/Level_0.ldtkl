@@ -29,6 +29,53 @@
 	"fieldInstances": [],
 	"layerInstances": [
 		{
+			"__identifier": "Entities",
+			"__type": "Entities",
+			"__cWid": 16,
+			"__cHei": 16,
+			"__gridSize": 16,
+			"__opacity": 1,
+			"__pxTotalOffsetX": 0,
+			"__pxTotalOffsetY": 0,
+			"__tilesetDefUid": null,
+			"__tilesetRelPath": null,
+			"iid": "406cc010-1460-11ee-8e70-733f2b28d410",
+			"levelId": 0,
+			"layerDefUid": 4,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"visible": true,
+			"optionalRules": [],
+			"intGridCsv": [],
+			"autoLayerTiles": [],
+			"seed": 7806126,
+			"overrideTilesetUid": null,
+			"gridTiles": [],
+			"entityInstances": [
+				{
+					"__identifier": "Lightray",
+					"__grid": [15,12],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#ECA201",
+					"iid": "4e484420-1460-11ee-8e70-8134f9b756c4",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [240,192],
+					"fieldInstances": [
+						{ "__identifier": "direction", "__type": "Point", "__value": { "cx": 0, "cy": 9 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["0,9"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#ECA201", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [15507969] }] },
+						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+					]
+				}
+			]
+		},
+		{
 			"__identifier": "IntGrid",
 			"__type": "IntGrid",
 			"__cWid": 16,

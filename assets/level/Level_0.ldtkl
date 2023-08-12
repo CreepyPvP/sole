@@ -54,54 +54,12 @@
 			"entityInstances": [
 				{
 					"__identifier": "Lightray",
-					"__grid": [14,12],
-					"__pivot": [0,0],
-					"__tags": [],
-					"__tile": null,
-					"__smartColor": "#ECA201",
-					"iid": "4e484420-1460-11ee-8e70-8134f9b756c4",
-					"width": 16,
-					"height": 16,
-					"defUid": 2,
-					"px": [224,192],
-					"fieldInstances": [
-						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 1, "cy": 12 }, "__tile": null, "defUid": 3, "realEditorValues": [{
-							"id": "V_String",
-							"params": ["1,12"]
-						}] },
-						{ "__identifier": "color", "__type": "Color", "__value": "#ECA201", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [15507969] }] },
-						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
-					]
-				},
-				{
-					"__identifier": "Lightray",
-					"__grid": [1,2],
-					"__pivot": [0,0],
-					"__tags": [],
-					"__tile": null,
-					"__smartColor": "#000000",
-					"iid": "4b4299e0-1460-11ee-967f-c78013e3d141",
-					"width": 16,
-					"height": 16,
-					"defUid": 2,
-					"px": [16,32],
-					"fieldInstances": [
-						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 14, "cy": 2 }, "__tile": null, "defUid": 3, "realEditorValues": [{
-							"id": "V_String",
-							"params": ["14,2"]
-						}] },
-						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
-						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
-					]
-				},
-				{
-					"__identifier": "Lightray",
 					"__grid": [3,14],
 					"__pivot": [0,0],
 					"__tags": [],
 					"__tile": null,
 					"__smartColor": "#000000",
-					"iid": "564115b0-1460-11ee-967f-1d9c586d4a61",
+					"iid": "2cba0150-1460-11ee-919a-c1a388613d77",
 					"width": 16,
 					"height": 16,
 					"defUid": 2,
@@ -112,7 +70,28 @@
 							"params": ["3,1"]
 						}] },
 						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
-						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+						{ "__identifier": "priority", "__type": "Int", "__value": 1, "__tile": null, "defUid": 7, "realEditorValues": [{ "id": "V_Int", "params": [1] }] }
+					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [1,3],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "33340670-1460-11ee-919a-538f6f9d85aa",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [16,48],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 14, "cy": 3 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["14,3"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
+						{ "__identifier": "priority", "__type": "Int", "__value": 0, "__tile": null, "defUid": 7, "realEditorValues": [] }
 					]
 				},
 				{
@@ -122,7 +101,7 @@
 					"__tags": [],
 					"__tile": null,
 					"__smartColor": "#000000",
-					"iid": "5f4a9f50-1460-11ee-967f-f1d8603fb95a",
+					"iid": "995d44a0-1460-11ee-919a-cbd055cdd456",
 					"width": 16,
 					"height": 16,
 					"defUid": 2,
@@ -132,8 +111,29 @@
 							"id": "V_String",
 							"params": ["12,14"]
 						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [0] }] },
+						{ "__identifier": "priority", "__type": "Int", "__value": -1, "__tile": null, "defUid": 7, "realEditorValues": [{ "id": "V_Int", "params": [-1] }] }
+					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [14,12],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "780738a0-1460-11ee-919a-739bf0e69bf0",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [224,192],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 1, "cy": 12 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["1,12"]
+						}] },
 						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
-						{ "__identifier": "strength", "__type": "Float", "__value": 0, "__tile": null, "defUid": 6, "realEditorValues": [] }
+						{ "__identifier": "priority", "__type": "Int", "__value": -2, "__tile": null, "defUid": 7, "realEditorValues": [{ "id": "V_Int", "params": [-2] }] }
 					]
 				}
 			]
@@ -157,14 +157,14 @@
 			"visible": true,
 			"optionalRules": [],
 			"intGridCsv": [
-				1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,
-				0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,
-				0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,1,
-				1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,
-				0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-				1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,
-				0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,
-				1,1,1,1,1,1,1,1,1,1,1
+				1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,0,0,0,0,
+				0,0,0,0,0,0,0,0,0,5,4,0,0,0,0,0,0,0,1,1,1,1,0,0,0,5,4,0,0,0,0,0,0,0,1,
+				1,1,1,0,0,0,5,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,5,0,0,0,0,0,0,0,0,1,1,1,1,
+				0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,
+				0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,0,0,0,1,1,0,0,0,0,0,0,0,0,0,5,1,3,3,3,3,
+				3,3,3,3,3,3,3,3,3,3,1
 			],
 			"autoLayerTiles": [],
 			"seed": 1438218,

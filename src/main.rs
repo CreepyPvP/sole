@@ -11,14 +11,25 @@ use bevy::{
             SpecializedMeshPipelineError,
         },
     },
-    sprite::{MaterialMesh2dBundle, Sprite, SpriteBundle},
+    sprite::{Anchor, MaterialMesh2dBundle, Sprite, SpriteBundle},
     DefaultPlugins,
 };
+use picking::{PickCamera, Pickable, PickingPlugin, Triangle, PickState};
 use serde::Deserialize;
+
+mod picking;
 
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
+const PLAYER_SPEED: f32 = 2.;
+
+const RAY_COLORS: [Color; 4] = [
+    Color::rgb(255. / 255., 206. / 255., 92. / 255.),
+    Color::rgb(235. / 255., 171. / 255., 52. / 255.),
+    Color::rgb(165. / 255., 224. / 255., 47. / 255.),
+    Color::rgb(69. / 255., 97. / 255., 237. / 255.),
+];
 
 #[derive(Deserialize)]
 struct LayerInstance {
@@ -80,7 +91,6 @@ struct Player {
     y: f32,
 }
 
-
 fn render_map(
     mut commands: Commands,
     assets: Res<AssetServer>,
@@ -90,9 +100,10 @@ fn render_map(
     let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
     let light_ray_texture_atlas = TextureAtlas::from_grid(
-        assets.load("lightray.png"),
+        // assets.load("lightray.png"),
+        assets.load("photon_ray_6spd_greyscale.png"),
         Vec2::new(32.0, 32.0),
-        5,
+        6,
         1,
         None,
         None,
@@ -102,21 +113,52 @@ fn render_map(
     for layer in level.layerInstances {
         match layer.__type.as_str() {
             "IntGrid" => {
+                let pickable = Pickable { 
+                    triangles: vec![
+                        Triangle::new(
+                            Vec2::new(-16., 16.),
+                            Vec2::new(16., 16.),
+                            Vec2::new(-16., -16.)
+                            ),
+                            Triangle::new(
+                                Vec2::new(16., 16.),
+                                Vec2::new(-16., -16.),
+                                Vec2::new(16., -16.)
+                                )
+                    ] 
+                };
                 for x in 0..layer.__cWid {
                     for y in 0..layer.__cHei {
                         let index: usize = (x + layer.__cWid * y) as usize;
-                        if layer.intGridCsv[index] == 0 {
-                            continue;
+                        match layer.intGridCsv[index] {
+                            1 => {
+                                commands.spawn(SpriteBundle {
+                                    texture: assets.load("tiles_middle.png"),
+                                    transform: Transform::from_xyz(
+                                        (x as f32) * TILE_SIZE,
+                                        -(y as f32) * TILE_SIZE,
+                                        0.0,
+                                    ),
+                                    ..Default::default()
+                                });
+                            }
+                            2..=5 => {
+                                // pickable tiles
+                                commands.spawn((
+                                    SpriteBundle {
+                                        texture: assets.load("tiles_middle.png"),
+                                        transform: Transform::from_xyz(
+                                            (x as f32) * TILE_SIZE,
+                                            -(y as f32) * TILE_SIZE,
+                                            0.0,
+                                        ),
+                                        ..Default::default()
+                                    },
+                                    pickable.clone(),
+                                ));
+                            }
+                            _ => (),
                         }
-                        commands.spawn(SpriteBundle {
-                            texture: assets.load("tiles_middle.png"),
-                            transform: Transform::from_xyz(
-                                (x as f32) * TILE_SIZE,
-                                -(y as f32) * TILE_SIZE,
-                                0.0,
-                            ),
-                            ..Default::default()
-                        });
                     }
                 }
             }
@@ -129,6 +171,7 @@ fn render_map(
                             let mut dest_y: i32 = 0;
                             let mut src_x = entity.__grid[0];
                             let mut src_y = entity.__grid[1];
+                            let mut prio = 0;
                             for field in entity.fieldInstances {
                                 match field.__identifier.as_str() {
                                     "destination" => {
@@ -136,21 +179,21 @@ fn render_map(
                                         dest_x = obj.get("cx").unwrap().as_i64().unwrap() as i32;
                                         dest_y = obj.get("cy").unwrap().as_i64().unwrap() as i32;
                                     }
-                                    "color" => {
-                                        color = field.__value.to_string();
+                                    "priority" => {
+                                        prio = field.__value.as_i64().unwrap() as i32;
                                     }
                                     _ => (),
                                 }
                             }
 
                             let horizontal = dest_y == src_y;
-                            let mut reversed = false;
+                            let mut reversed = true;
 
                             if src_x > dest_x {
                                 let tmp = src_x;
                                 src_x = dest_x;
                                 dest_x = tmp;
-                                reversed = true;
+                                reversed = false;
                             }
 
                             if src_y >= dest_y {
@@ -158,8 +201,7 @@ fn render_map(
                                 src_y = dest_y;
                                 dest_y = tmp;
                             } else {
-
-                                reversed = true;
+                                reversed = false;
                             }
 
                             let mut rot = 3.14;
@@ -170,17 +212,16 @@ fn render_map(
                                 rot += 3.14 / 2.;
                             }
 
-                            commands.spawn(
-                                Ray {
-                                    src_x,
-                                    src_y,
-                                    dest_x,
-                                    dest_y,
-                                    horizontal,
-                                    reversed,
-                                    prio: game_state.ray_count
-                                }
-                            );
+                            // let prio = game_state.ray_count;
+                            commands.spawn(Ray {
+                                src_x,
+                                src_y,
+                                dest_x,
+                                dest_y,
+                                horizontal,
+                                reversed,
+                                prio,
+                            });
 
                             game_state.ray_count += 1;
 
@@ -189,15 +230,20 @@ fn render_map(
                                     let mut transform = Transform::from_xyz(
                                         x as f32 * TILE_SIZE,
                                         -y as f32 * TILE_SIZE,
-                                        50.,
+                                        99. - prio as f32,
                                     );
                                     transform.rotate_z(rot);
-                                    let index = AnimationIndex { first: 0, last: 4 };
+                                    let index = AnimationIndex { first: 0, last: 5 };
                                     commands.spawn((
                                         SpriteSheetBundle {
                                             texture_atlas: light_ray_texture_handle.clone(),
                                             transform,
-                                            sprite: TextureAtlasSprite::new(index.first),
+                                            sprite: TextureAtlasSprite {
+                                                index: index.first,
+                                                // TODO: fix tint
+                                                color: RAY_COLORS[prio as usize % RAY_COLORS.len()],
+                                                ..Default::default()
+                                            },
                                             ..Default::default()
                                         },
                                         index,
@@ -238,47 +284,121 @@ fn update_animations(
     }
 }
 
-#[derive(Component)]
-struct Velocity {
-    x: f32,
-    y: f32,
-}
-
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn((SpriteBundle {
-        texture: assets.load("asymmetric_spaceship_64.png"),
-        transform: Transform::from_xyz(0., 0., 100.)
-            .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
-        ..Default::default()
-    },));
+    commands.spawn((
+        SpriteBundle {
+            texture: assets.load("asymmetric_spaceship_64.png"),
+            sprite: Sprite {
+                anchor: Anchor::Center,
+                ..Default::default()
+            },
+            transform: Transform::from_xyz(0., -100., 200.)
+                .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
+            ..Default::default()
+        },
+        Player { x: 3., y: 11. },
+    ));
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Camera2dBundle {
-        transform: Transform::from_xyz(
-            LEVEL_SIZE_X / 2. * TILE_SIZE,
-            -LEVEL_SIZE_Y / 2. * TILE_SIZE,
-            1000.,
-        ),
-        ..Default::default()
-    },));
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(
+                LEVEL_SIZE_X / 2. * TILE_SIZE,
+                -LEVEL_SIZE_Y / 2. * TILE_SIZE,
+                1000.,
+            ),
+            ..Default::default()
+        },
+        PickCamera,
+    ));
 }
 
-fn move_player(time: Res<Time>, q_player: Query<&Player>, q_ray: Query<&Ray>) {
-    for player in &q_player {
+fn move_player(
+    time: Res<Time>,
+    mut q_player: Query<(&mut Player, &mut Transform)>,
+    q_ray: Query<&Ray>,
+) {
+    for (mut player, mut transform) in &mut q_player {
+        let mut heighest_prio = 999999;
+        let mut x_diff = 0.;
+        let mut y_diff = 0.;
+
+        let player_x = player.x as i32;
+        let player_y = player.y as i32;
         for ray in &q_ray {
-            
+
+            let mut y_offset = 0;
+            if ray.reversed && ray.horizontal {
+                y_offset = -1;
+            }
+
+            if player_x >= ray.src_x
+                && player_x <= ray.dest_x
+                && player_y >= ray.src_y + y_offset
+                && player_y <= ray.dest_y + y_offset
+            {
+                if ray.prio > heighest_prio {
+                    continue;
+                }
+                heighest_prio = ray.prio;
+                if ray.horizontal {
+                    y_diff = 0.;
+                    if ray.reversed {
+                        x_diff = PLAYER_SPEED;
+                    } else {
+                        x_diff = -PLAYER_SPEED;
+                    }
+                } else {
+                    x_diff = 0.;
+                    if ray.reversed {
+                        y_diff = -PLAYER_SPEED;
+                    } else {
+                        y_diff = PLAYER_SPEED;
+                    }
+                }
+            }
+        }
+
+        player.x += time.delta().as_secs_f32() * x_diff;
+        player.y += time.delta().as_secs_f32() * y_diff;
+        transform.translation = Vec3::new(player.x * TILE_SIZE, -player.y * TILE_SIZE, 200.);
+    }
+}
+
+fn update_hover_tint(pick_state: Res<PickState>, mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>) {
+    for (mut sprite, entity, _) in &mut q_sprite {
+        if pick_state.selected.is_some() && pick_state.selected.unwrap() == entity {
+            sprite.color = Color::rgb(1.2, 1.2, 1.2);
+        } else {
+            sprite.color = Color::rgb(1., 1., 1.);
         }
     }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, SystemSet)]
+pub enum GameSystemSets {
+    Input,
+    Logic,
 }
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugin(PickingPlugin)
         .insert_resource(GameState::default())
+
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
-        .add_system(update_animations)
+
+        .configure_set(GameSystemSets::Input)
+        .configure_set(GameSystemSets::Logic.after(GameSystemSets::Input))
+
+        .add_systems((
+            update_animations,
+            move_player,
+            update_hover_tint
+        ).in_set(GameSystemSets::Logic))
         .run();
 }

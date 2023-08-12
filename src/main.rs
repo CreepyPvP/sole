@@ -57,11 +57,29 @@ struct AnimationIndex {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
+#[derive(Component)]
+struct Ray {
+    src_x: i32,
+    src_y: i32,
+    dest_x: i32,
+    dest_y: i32,
+    reversed: bool,
+    horizontal: bool,
+    // smaller prio value means its above rays with higher value
+    prio: i32,
+}
+
+#[derive(Resource, Default, Clone)]
+struct GameState {
+    ray_count: i32,
+}
+
+
 fn render_map(
     mut commands: Commands,
     assets: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut game_state: ResMut<GameState>,
 ) {
     let level_raw = include_str!("../assets/level/Level_0.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
@@ -143,6 +161,20 @@ fn render_map(
                             if !horizontal {
                                 rot += 3.14 / 2.;
                             }
+
+                            commands.spawn(
+                                Ray {
+                                    src_x,
+                                    src_y,
+                                    dest_x,
+                                    dest_y,
+                                    horizontal,
+                                    reversed,
+                                    prio: game_state.ray_count
+                                }
+                            );
+
+                            game_state.ray_count += 1;
 
                             for x in src_x..=dest_x {
                                 for y in src_y..=dest_y {
@@ -227,6 +259,7 @@ fn setup_camera(mut commands: Commands) {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(GameState::default())
         .add_startup_system(render_map)
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)

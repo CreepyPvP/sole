@@ -1,11 +1,10 @@
 use bevy::{
-    prelude::{
-        Camera, Component, Entity, GlobalTransform, Plugin, Query,
-        ResMut, Resource, Vec2, With,
-    },
+    prelude::*,
     render::camera::RenderTarget,
     window::{PrimaryWindow, Window},
 };
+
+use crate::GameSystemSets;
 
 // Components
 
@@ -31,7 +30,7 @@ pub struct PickingPlugin;
 impl Plugin for PickingPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(PickState::default());
-        app.add_system(pick_input);
+        app.add_system(pick_input.in_set(GameSystemSets::Input));
     }
 }
 

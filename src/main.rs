@@ -344,13 +344,19 @@ fn move_player(
 }
 
 fn update_hover_tint(pick_state: Res<PickState>, mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>) {
-    for (mut sprite, entity, pickable) in &mut q_sprite {
+    for (mut sprite, entity, _) in &mut q_sprite {
         if pick_state.selected.is_some() && pick_state.selected.unwrap() == entity {
-            sprite.color = Color::rgb(2., 2., 2.);
+            sprite.color = Color::rgb(1.2, 1.2, 1.2);
         } else {
             sprite.color = Color::rgb(1., 1., 1.);
         }
     }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, SystemSet)]
+pub enum GameSystemSets {
+    Input,
+    Logic,
 }
 
 fn main() {
@@ -363,8 +369,13 @@ fn main() {
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
 
-        .add_system(update_animations)
-        .add_system(move_player)
-        .add_system(update_hover_tint)
+        .configure_set(GameSystemSets::Input)
+        .configure_set(GameSystemSets::Logic.after(GameSystemSets::Input))
+
+        .add_systems((
+            update_animations,
+            move_player,
+            update_hover_tint
+        ).in_set(GameSystemSets::Logic))
         .run();
 }

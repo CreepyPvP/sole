@@ -74,6 +74,12 @@ struct GameState {
     ray_count: i32,
 }
 
+#[derive(Component)]
+struct Player {
+    x: f32,
+    y: f32,
+}
+
 
 fn render_map(
     mut commands: Commands,
@@ -106,7 +112,7 @@ fn render_map(
                             texture: assets.load("tiles_middle.png"),
                             transform: Transform::from_xyz(
                                 (x as f32) * TILE_SIZE,
-                                (y as f32) * TILE_SIZE,
+                                -(y as f32) * TILE_SIZE,
                                 0.0,
                             ),
                             ..Default::default()
@@ -147,16 +153,18 @@ fn render_map(
                                 reversed = true;
                             }
 
-                            if src_y > dest_y {
+                            if src_y >= dest_y {
                                 let tmp = src_y;
                                 src_y = dest_y;
                                 dest_y = tmp;
+                            } else {
+
                                 reversed = true;
                             }
 
-                            let mut rot = 0.;
+                            let mut rot = 3.14;
                             if reversed {
-                                rot += 3.14;
+                                rot = 0.;
                             }
                             if !horizontal {
                                 rot += 3.14 / 2.;
@@ -180,7 +188,7 @@ fn render_map(
                                 for y in src_y..=dest_y {
                                     let mut transform = Transform::from_xyz(
                                         x as f32 * TILE_SIZE,
-                                        y as f32 * TILE_SIZE,
+                                        -y as f32 * TILE_SIZE,
                                         50.,
                                     );
                                     transform.rotate_z(rot);
@@ -238,9 +246,9 @@ struct Velocity {
 
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((SpriteBundle {
-        texture: assets.load("asymmetric_spaceship_v1.png"),
+        texture: assets.load("asymmetric_spaceship_64.png"),
         transform: Transform::from_xyz(0., 0., 100.)
-            .with_scale(bevy::prelude::Vec3::new(0.125, 0.125, 1.)),
+            .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
         ..Default::default()
     },));
 }
@@ -249,11 +257,19 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2dBundle {
         transform: Transform::from_xyz(
             LEVEL_SIZE_X / 2. * TILE_SIZE,
-            LEVEL_SIZE_Y / 2. * TILE_SIZE,
+            -LEVEL_SIZE_Y / 2. * TILE_SIZE,
             1000.,
         ),
         ..Default::default()
     },));
+}
+
+fn move_player(time: Res<Time>, q_player: Query<&Player>, q_ray: Query<&Ray>) {
+    for player in &q_player {
+        for ray in &q_ray {
+            
+        }
+    }
 }
 
 fn main() {

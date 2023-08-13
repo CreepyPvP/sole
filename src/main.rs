@@ -22,7 +22,7 @@ mod picking;
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
-const PLAYER_SPEED: f32 = 2.;
+const PLAYER_SPEED: f32 = 1.;
 
 const RAY_COLORS: [Color; 4] = [
     Color::rgb(255. / 255., 206. / 255., 92. / 255.),
@@ -327,22 +327,30 @@ fn move_player(
         let player_x = player.x as i32;
         let player_y = player.y as i32;
         for ray in &q_ray {
+
+            let mut y_offset = 0;
+            if ray.reversed && ray.horizontal {
+                y_offset = -1;
+            }
+
             if player_x >= ray.src_x
                 && player_x <= ray.dest_x
-                && player_y >= ray.src_y
-                && player_y <= ray.dest_y
+                && player_y >= ray.src_y + y_offset
+                && player_y <= ray.dest_y + y_offset
             {
                 if ray.prio > heighest_prio {
                     continue;
                 }
                 heighest_prio = ray.prio;
                 if ray.horizontal {
+                    y_diff = 0.;
                     if ray.reversed {
                         x_diff = PLAYER_SPEED;
                     } else {
                         x_diff = -PLAYER_SPEED;
                     }
                 } else {
+                    x_diff = 0.;
                     if ray.reversed {
                         y_diff = -PLAYER_SPEED;
                     } else {

@@ -22,7 +22,7 @@ mod picking;
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
-const PLAYER_SPEED: f32 = 3.;
+const PLAYER_SPEED: f32 = 2.;
 
 const RAY_COLORS: [Color; 4] = [
     Color::rgb(255. / 255., 206. / 255., 92. / 255.),
@@ -171,6 +171,7 @@ fn render_map(
                             let mut dest_y: i32 = 0;
                             let mut src_x = entity.__grid[0];
                             let mut src_y = entity.__grid[1];
+                            let mut prio = 0;
                             for field in entity.fieldInstances {
                                 match field.__identifier.as_str() {
                                     "destination" => {
@@ -178,8 +179,8 @@ fn render_map(
                                         dest_x = obj.get("cx").unwrap().as_i64().unwrap() as i32;
                                         dest_y = obj.get("cy").unwrap().as_i64().unwrap() as i32;
                                     }
-                                    "color" => {
-                                        color = field.__value.to_string();
+                                    "priority" => {
+                                        prio = field.__value.as_i64().unwrap() as i32;
                                     }
                                     _ => (),
                                 }
@@ -211,7 +212,7 @@ fn render_map(
                                 rot += 3.14 / 2.;
                             }
 
-                            let prio = game_state.ray_count;
+                            // let prio = game_state.ray_count;
                             commands.spawn(Ray {
                                 src_x,
                                 src_y,
@@ -295,7 +296,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
-        Player { x: 8., y: 3. },
+        Player { x: 3., y: 11. },
     ));
 }
 

@@ -93,6 +93,48 @@
 						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
 						{ "__identifier": "priority", "__type": "Int", "__value": 0, "__tile": null, "defUid": 7, "realEditorValues": [] }
 					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [12,1],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "995d44a0-1460-11ee-919a-cbd055cdd456",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [192,16],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 12, "cy": 14 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["12,14"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [{ "id": "V_Int", "params": [0] }] },
+						{ "__identifier": "priority", "__type": "Int", "__value": -1, "__tile": null, "defUid": 7, "realEditorValues": [{ "id": "V_Int", "params": [-1] }] }
+					]
+				},
+				{
+					"__identifier": "Lightray",
+					"__grid": [14,12],
+					"__pivot": [0,0],
+					"__tags": [],
+					"__tile": null,
+					"__smartColor": "#000000",
+					"iid": "780738a0-1460-11ee-919a-739bf0e69bf0",
+					"width": 16,
+					"height": 16,
+					"defUid": 2,
+					"px": [224,192],
+					"fieldInstances": [
+						{ "__identifier": "destination", "__type": "Point", "__value": { "cx": 1, "cy": 12 }, "__tile": null, "defUid": 3, "realEditorValues": [{
+							"id": "V_String",
+							"params": ["1,12"]
+						}] },
+						{ "__identifier": "color", "__type": "Color", "__value": "#000000", "__tile": null, "defUid": 5, "realEditorValues": [] },
+						{ "__identifier": "priority", "__type": "Int", "__value": -2, "__tile": null, "defUid": 7, "realEditorValues": [{ "id": "V_Int", "params": [-2] }] }
+					]
 				}
 			]
 		},

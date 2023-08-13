@@ -22,7 +22,7 @@ mod picking;
 const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
-const PLAYER_SPEED: f32 = 1.;
+const PLAYER_SPEED: f32 = 2.;
 
 const RAY_COLORS: [Color; 4] = [
     Color::rgb(255. / 255., 206. / 255., 92. / 255.),
@@ -292,7 +292,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 anchor: Anchor::Center,
                 ..Default::default()
             },
-            transform: Transform::from_xyz(0., -100., 100.)
+            transform: Transform::from_xyz(0., -100., 200.)
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
@@ -362,7 +362,7 @@ fn move_player(
 
         player.x += time.delta().as_secs_f32() * x_diff;
         player.y += time.delta().as_secs_f32() * y_diff;
-        transform.translation = Vec3::new(player.x * TILE_SIZE, -player.y * TILE_SIZE, 100.);
+        transform.translation = Vec3::new(player.x * TILE_SIZE, -player.y * TILE_SIZE, 200.);
     }
 }
 

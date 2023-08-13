@@ -296,7 +296,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
-        Player { x: 3., y: 11. },
+        Player { x: 13., y: 10. },
     ));
 }
 
@@ -329,12 +329,20 @@ fn move_player(
         for ray in &q_ray {
 
             let mut y_offset = 0;
+            let mut x_offset = 0;
+
             if ray.reversed && ray.horizontal {
+                // y_offset = -1;
+            }
+            if !ray.reversed && ray.horizontal {
                 y_offset = -1;
             }
+            if !ray.reversed && !ray.horizontal {
+                x_offset = -1;
+            }
 
-            if player_x >= ray.src_x
-                && player_x <= ray.dest_x
+            if player_x >= ray.src_x + x_offset
+                && player_x <= ray.dest_x + x_offset
                 && player_y >= ray.src_y + y_offset
                 && player_y <= ray.dest_y + y_offset
             {

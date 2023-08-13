@@ -1,6 +1,7 @@
 use std::{default, string};
 
 use bevy::{
+    input::mouse::MouseButtonInput,
     pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
     reflect::TypeUuid,
@@ -23,6 +24,8 @@ const TILE_SIZE: f32 = 32.0;
 const LEVEL_SIZE_X: f32 = 16.0;
 const LEVEL_SIZE_Y: f32 = 16.0;
 const PLAYER_SPEED: f32 = 2.;
+
+static mut light_ray_texture_handle: Option<Handle<TextureAtlas>> = None; 
 
 const RAY_COLORS: [Color; 4] = [
     Color::rgb(255. / 255., 206. / 255., 92. / 255.),
@@ -57,6 +60,13 @@ struct EntityInstance {
 #[derive(Deserialize)]
 struct Level {
     layerInstances: Vec<LayerInstance>,
+}
+
+#[derive(Component)]
+struct RayCaster {
+    dir: Dir,
+    pos_x: i32,
+    pos_y: i32,
 }
 
 #[derive(Component)]
@@ -101,14 +111,7 @@ struct Player {
     last_direction: Option<Dir>,
 }
 
-fn render_map(
-    mut commands: Commands,
-    assets: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut game_state: ResMut<GameState>,
-) {
-    let level_raw = include_str!("../assets/level/Level_0.ldtkl");
-    let level: Level = serde_json::from_str(level_raw).unwrap();
+fn setup_textures(assets: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlas>>) {
     let light_ray_texture_atlas = TextureAtlas::from_grid(
         // assets.load("lightray.png"),
         assets.load("photon_ray_6spd_white_40alpha.png"),
@@ -118,8 +121,18 @@ fn render_map(
         None,
         None,
     );
-    let light_ray_texture_handle = texture_atlases.add(light_ray_texture_atlas);
+    unsafe {
+        light_ray_texture_handle = Some(texture_atlases.add(light_ray_texture_atlas));
+    }
+}
 
+fn render_map(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut game_state: ResMut<GameState>,
+) {
+    let level_raw = include_str!("../assets/level/Level_0.ldtkl");
+    let level: Level = serde_json::from_str(level_raw).unwrap();
     for layer in level.layerInstances {
         match layer.__type.as_str() {
             "IntGrid" => {
@@ -140,7 +153,8 @@ fn render_map(
                 for x in 0..layer.__cWid {
                     for y in 0..layer.__cHei {
                         let index: usize = (x + layer.__cWid * y) as usize;
-                        match layer.intGridCsv[index] {
+                        let value = layer.intGridCsv[index];
+                        match value {
                             1 => {
                                 commands.spawn(SpriteBundle {
                                     texture: assets.load("tiles_middle.png"),
@@ -153,6 +167,14 @@ fn render_map(
                                 });
                             }
                             2..=5 => {
+                                let dir: Dir = match value {
+                                    2 => Dir::Downwards,
+                                    3 => Dir::Upwards,
+                                    4 => Dir::Rightwards,
+                                    5 => Dir::Leftwards,
+                                    // wtf are we doing?
+                                    _ => Dir::Leftwards,
+                                };
                                 // pickable tiles
                                 commands.spawn((
                                     SpriteBundle {
@@ -165,6 +187,11 @@ fn render_map(
                                         ..Default::default()
                                     },
                                     pickable.clone(),
+                                    RayCaster {
+                                        dir,
+                                        pos_x: x,
+                                        pos_y: y,
+                                    },
                                 ));
                             }
                             _ => (),
@@ -176,7 +203,6 @@ fn render_map(
                 for entity in layer.entityInstances {
                     match entity.__identifier.as_str() {
                         "Lightray" => {
-                            let mut color: String = String::default();
                             let mut dest_x: i32 = 0;
                             let mut dest_y: i32 = 0;
                             let mut src_x = entity.__grid[0];
@@ -195,75 +221,8 @@ fn render_map(
                                     _ => (),
                                 }
                             }
-
-                            let horizontal = dest_y == src_y;
-                            let mut reversed = true;
-
-                            if src_x > dest_x {
-                                let tmp = src_x;
-                                src_x = dest_x;
-                                dest_x = tmp;
-                                reversed = false;
-                            }
-
-                            if src_y >= dest_y {
-                                let tmp = src_y;
-                                src_y = dest_y;
-                                dest_y = tmp;
-                            } else {
-                                reversed = false;
-                            }
-
-                            let mut rot = 3.14;
-                            if reversed {
-                                rot = 0.;
-                            }
-                            if !horizontal {
-                                rot += 3.14 / 2.;
-                            }
-
-                            // let prio = game_state.ray_count;
-                            commands.spawn(Ray {
-                                src_x,
-                                src_y,
-                                dest_x,
-                                dest_y,
-                                horizontal,
-                                reversed,
-                                prio,
-                            });
-
+                            spawn_ray(src_x, src_y, dest_x, dest_y, prio, &mut commands);
                             game_state.ray_count += 1;
-
-                            for x in src_x..=dest_x {
-                                for y in src_y..=dest_y {
-                                    let mut transform = Transform::from_xyz(
-                                        x as f32 * TILE_SIZE,
-                                        -y as f32 * TILE_SIZE,
-                                        99. - prio as f32,
-                                    );
-                                    transform.rotate_z(rot);
-                                    let index = AnimationIndex { first: 0, last: 5 };
-                                    commands.spawn((
-                                        SpriteSheetBundle {
-                                            texture_atlas: light_ray_texture_handle.clone(),
-                                            transform,
-                                            sprite: TextureAtlasSprite {
-                                                index: index.first,
-                                                // TODO: fix tint
-                                                color: RAY_COLORS[prio as usize % RAY_COLORS.len()],
-                                                ..Default::default()
-                                            },
-                                            ..Default::default()
-                                        },
-                                        index,
-                                        AnimationTimer(Timer::from_seconds(
-                                            0.1,
-                                            TimerMode::Repeating,
-                                        )),
-                                    ));
-                                }
-                            }
                         }
                         _ => (),
                     }
@@ -349,26 +308,33 @@ fn move_player(
             if (matches!(player.direction, Some(Dir::Upwards))
                 || (matches!(player.direction, Some(Dir::Rightwards))
                     && matches!(player.last_direction, Some(Dir::Upwards))))
-                && ray.reversed && ray.horizontal
+                && ray.reversed
+                && ray.horizontal
             {
                 y_offset = -1;
             }
             if (matches!(player.direction, Some(Dir::Upwards))
                 || (matches!(player.direction, Some(Dir::Leftwards))
                     && matches!(player.last_direction, Some(Dir::Upwards))))
-                && !ray.reversed && ray.horizontal {
+                && !ray.reversed
+                && ray.horizontal
+            {
                 y_offset = -1;
             }
             if (matches!(player.direction, Some(Dir::Leftwards))
                 || (matches!(player.direction, Some(Dir::Downwards))
                     && matches!(player.last_direction, Some(Dir::Leftwards))))
-                && !ray.reversed && !ray.horizontal {
+                && !ray.reversed
+                && !ray.horizontal
+            {
                 x_offset = -1;
             }
             if (matches!(player.direction, Some(Dir::Leftwards))
                 || (matches!(player.direction, Some(Dir::Upwards))
                     && matches!(player.last_direction, Some(Dir::Leftwards))))
-                && ray.reversed && !ray.horizontal {
+                && ray.reversed
+                && !ray.horizontal
+            {
                 x_offset = -1;
             }
 
@@ -415,13 +381,107 @@ fn move_player(
     }
 }
 
+fn spawn_ray(mut src_x: i32, mut src_y: i32, mut dest_x: i32, mut dest_y: i32, prio: i32, commands: &mut Commands) {
+    let horizontal = dest_y == src_y;
+    let mut reversed = true;
+
+    if src_x > dest_x {
+        let tmp = src_x;
+        src_x = dest_x;
+        dest_x = tmp;
+        reversed = false;
+    }
+
+    if src_y >= dest_y {
+        let tmp = src_y;
+        src_y = dest_y;
+        dest_y = tmp;
+    } else {
+        reversed = false;
+    }
+
+    let mut rot = 3.14;
+    if reversed {
+        rot = 0.;
+    }
+    if !horizontal {
+        rot += 3.14 / 2.;
+    }
+
+    // let prio = game_state.ray_count;
+    commands.spawn(Ray {
+        src_x,
+        src_y,
+        dest_x,
+        dest_y,
+        horizontal,
+        reversed,
+        prio,
+    });
+
+    let mut light_ray_handle: Option<Handle<TextureAtlas>> = None;
+    unsafe {
+        light_ray_handle = light_ray_texture_handle.clone();
+    }
+
+    for x in src_x..=dest_x {
+        for y in src_y..=dest_y {
+            let mut transform = Transform::from_xyz(
+                x as f32 * TILE_SIZE,
+                -y as f32 * TILE_SIZE,
+                99. - prio as f32,
+            );
+            transform.rotate_z(rot);
+            let index = AnimationIndex { first: 0, last: 5 };
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture_atlas: light_ray_handle.clone().unwrap(),
+                    transform,
+                    sprite: TextureAtlasSprite {
+                        index: index.first,
+                        // TODO: fix tint
+                        color: RAY_COLORS[prio as usize % RAY_COLORS.len()],
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                index,
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            ));
+        }
+    }
+}
+
 fn update_hover_tint(
     pick_state: Res<PickState>,
-    mut q_sprite: Query<(&mut Sprite, Entity, &Pickable)>,
+    mut q_sprite: Query<(&mut Sprite, Entity, &RayCaster)>,
+    mouse: Res<Input<MouseButton>>,
+    mut game_state: ResMut<GameState>,
+    mut commands: Commands,
 ) {
-    for (mut sprite, entity, _) in &mut q_sprite {
+    for (mut sprite, entity, ray_caster) in &mut q_sprite {
         if pick_state.selected.is_some() && pick_state.selected.unwrap() == entity {
             sprite.color = Color::rgb(1.2, 1.2, 1.2);
+
+            if mouse.just_pressed(MouseButton::Left) {
+                match ray_caster.dir {
+                    Dir::Upwards => {
+                        let prio = game_state.ray_count;
+                        spawn_ray(
+                            ray_caster.pos_x,
+                            ray_caster.pos_y,
+                            ray_caster.pos_x,
+                            -LEVEL_SIZE_Y as i32,
+                            prio,
+                            &mut commands
+                        );
+                    }
+                    Dir::Downwards => {}
+                    Dir::Leftwards => {}
+                    Dir::Rightwards => {}
+                }
+                game_state.ray_count += 1;
+            }
         } else {
             sprite.color = Color::rgb(1., 1., 1.);
         }
@@ -439,9 +499,12 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugin(PickingPlugin)
         .insert_resource(GameState::default())
-        .add_startup_system(render_map)
+
+        .add_startup_system(render_map.after(setup_textures))
         .add_startup_system(setup_player)
         .add_startup_system(setup_camera)
+        .add_startup_system(setup_textures)
+
         .configure_set(GameSystemSets::Input)
         .configure_set(GameSystemSets::Logic.after(GameSystemSets::Input))
         .add_systems(

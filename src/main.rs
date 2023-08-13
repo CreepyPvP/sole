@@ -131,7 +131,7 @@ fn render_map(
     assets: Res<AssetServer>,
     mut game_state: ResMut<GameState>,
 ) {
-    let level_raw = include_str!("../assets/level/Level_0.ldtkl");
+    let level_raw = include_str!("../assets/level/Level_3.ldtkl");
     let level: Level = serde_json::from_str(level_raw).unwrap();
     for layer in level.layerInstances {
         match layer.__type.as_str() {
@@ -266,7 +266,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
         },
         Player {
             x: 3.,
-            y: 8.,
+            y: 10.,
             direction: None,
             last_direction: None,
         },

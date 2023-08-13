@@ -161,7 +161,7 @@ fn render_map(
                                     transform: Transform::from_xyz(
                                         (x as f32) * TILE_SIZE,
                                         -(y as f32) * TILE_SIZE,
-                                        0.0,
+                                        100.,
                                     ),
                                     ..Default::default()
                                 });
@@ -182,7 +182,7 @@ fn render_map(
                                         transform: Transform::from_xyz(
                                             (x as f32) * TILE_SIZE,
                                             -(y as f32) * TILE_SIZE,
-                                            0.0,
+                                            100.,
                                         ),
                                         ..Default::default()
                                     },
@@ -428,7 +428,7 @@ fn spawn_ray(mut src_x: i32, mut src_y: i32, mut dest_x: i32, mut dest_y: i32, p
             let mut transform = Transform::from_xyz(
                 x as f32 * TILE_SIZE,
                 -y as f32 * TILE_SIZE,
-                99. - prio as f32,
+                50. - prio as f32,
             );
             transform.rotate_z(rot);
             let index = AnimationIndex { first: 0, last: 5 };

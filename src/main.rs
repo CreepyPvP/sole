@@ -256,13 +256,12 @@ fn update_animations(
 fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((
         SpriteBundle {
-            texture: assets.load("asymmetric_spaceship_64.png"),
+            texture: assets.load("high_res_spacecrafts/true_pixel_art_spaceship_solarsail.png"),
             sprite: Sprite {
                 anchor: Anchor::Center,
                 ..Default::default()
             },
-            transform: Transform::from_xyz(0., -100., 200.)
-                .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
+            transform: Transform::from_xyz(0., -100., 200.),
             ..Default::default()
         },
         Player {
@@ -464,9 +463,9 @@ fn update_hover_tint(
             sprite.color = Color::rgb(1.2, 1.2, 1.2);
 
             if mouse.just_pressed(MouseButton::Left) {
+                let prio = game_state.ray_count;
                 match ray_caster.dir {
                     Dir::Upwards => {
-                        let prio = game_state.ray_count;
                         spawn_ray(
                             ray_caster.pos_x,
                             ray_caster.pos_y,
@@ -476,9 +475,36 @@ fn update_hover_tint(
                             &mut commands
                         );
                     }
-                    Dir::Downwards => {}
-                    Dir::Leftwards => {}
-                    Dir::Rightwards => {}
+                    Dir::Downwards => {
+                        spawn_ray(
+                            ray_caster.pos_x,
+                            ray_caster.pos_y,
+                            ray_caster.pos_x,
+                            LEVEL_SIZE_Y as i32,
+                            prio,
+                            &mut commands
+                        );
+                    }
+                    Dir::Leftwards => {
+                        spawn_ray(
+                            ray_caster.pos_x,
+                            ray_caster.pos_y,
+                            -LEVEL_SIZE_X as i32,
+                            ray_caster.pos_y,
+                            prio,
+                            &mut commands
+                        );
+                    }
+                    Dir::Rightwards => {
+                        spawn_ray(
+                            ray_caster.pos_x,
+                            ray_caster.pos_y,
+                            LEVEL_SIZE_X as i32,
+                            ray_caster.pos_y,
+                            prio,
+                            &mut commands
+                        );
+                    }
                 }
                 game_state.ray_count += 1;
             }

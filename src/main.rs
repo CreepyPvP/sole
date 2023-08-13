@@ -186,13 +186,13 @@ fn render_map(
                             }
 
                             let horizontal = dest_y == src_y;
-                            let mut reversed = false;
+                            let mut reversed = true;
 
                             if src_x > dest_x {
                                 let tmp = src_x;
                                 src_x = dest_x;
                                 dest_x = tmp;
-                                reversed = true;
+                                reversed = false;
                             }
 
                             if src_y >= dest_y {
@@ -200,7 +200,7 @@ fn render_map(
                                 src_y = dest_y;
                                 dest_y = tmp;
                             } else {
-                                reversed = true;
+                                reversed = false;
                             }
 
                             let mut rot = 3.14;
@@ -295,7 +295,7 @@ fn setup_player(mut commands: Commands, assets: Res<AssetServer>) {
                 .with_scale(bevy::prelude::Vec3::new(0.5, 0.5, 1.)),
             ..Default::default()
         },
-        Player { x: 12., y: 10. },
+        Player { x: 8., y: 3. },
     ));
 }
 
@@ -323,11 +323,13 @@ fn move_player(
         let mut x_diff = 0.;
         let mut y_diff = 0.;
 
+        let player_x = player.x as i32;
+        let player_y = player.y as i32;
         for ray in &q_ray {
-            if player.x >= (ray.src_x as f32)
-                && player.x <= (ray.dest_x as f32)
-                && player.y <= (ray.dest_y as f32)
-                && player.y >= (ray.dest_y as f32)
+            if player_x >= ray.src_x
+                && player_x <= ray.dest_x
+                && player_y >= ray.src_y
+                && player_y <= ray.dest_y
             {
                 if ray.prio > heighest_prio {
                     continue;
